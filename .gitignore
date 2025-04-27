@@ -1,3 +1,10 @@
+# Python virtual environment
+.venv/
+
+# JetBrains IDE settings
+.idea/
+
+
 # Python bytecode files
 __pycache__/
 *.pyc

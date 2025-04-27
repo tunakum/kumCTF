@@ -1,0 +1,14 @@
+# Python bytecode files
+__pycache__/
+*.pyc
+
+# Django
+*.log
+*.sqlite3
+/media/
+
+# VS Code settings
+.vscode/
+
+# MacOS
+.DS_Store

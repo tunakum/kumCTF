@@ -1,5 +1,4 @@
-#fonksiyonlarda çalışmayanlar var john buga giriyor ona bakılacak, derlemeler ve kod mimarisi düzeltilecek
-#geri gitme ve ctrlc basınca uygulama içerisinde kalma her fonksiyona gelecek
+#main menuya quit(q) eklenecek kodlar düzenlenecek tool açıklamaları detaylandırılacak anlaşılır şekilde
 import subprocess
 import os
 import re
@@ -22,33 +21,47 @@ def run_whois():
     while value_error_count < 3:
         clear_terminal()
         target = console.input("Enter the target domain or IP for whois lookup:\n[green]kumCTF[/green]>")
+        console.print("[yellow]Press Ctrl+C to stop the lookup at any time[/yellow]\n")
+        console.print("[bold green]whois in progress...[/bold green]\n")
+        console.print("")
 
         if not target:
             value_error_count += 1
             console.print(
                 f"[bold red]Invalid input![/bold red] Please provide a valid domain or IP. Attempts remaining: {3 - value_error_count}")
             continue
+
         try:
             result = subprocess.run(["whois", target], capture_output=True, text=True, check=True)
             console.print(f"[green]WHOIS lookup result for {target}:[/green]")
             print(result.stdout)
             break
+
         except subprocess.CalledProcessError as e:
             back = console.input(f"""[bold red]Error:[/bold red] An error occurred while running whois: {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
             if back == 'b':
-                clear_terminal()
                 information_gathering()
                 break
             value_error_count += 1
+
         except Exception as e:
             back = console.input(f"""[bold red]Unexpected error:[/bold red] {e}\n
                 Press (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>
                 """)
             if back == 'b':
-                clear_terminal()
                 information_gathering()
                 break
             value_error_count += 1
+
+        except KeyboardInterrupt:
+            console.print("[bold yellow]Scan interrupted by user.[/bold yellow]\n")
+            back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+            if back == 'b':
+                information_gathering()
+                break
+            else:
+                console.print("[bold red]Invalid attempt exiting...[/bold red]")
+                exit()
 
     if value_error_count >= 3:
         console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
@@ -62,6 +75,8 @@ def run_ping():
     while value_error_count < 3:
         clear_terminal()
         target = console.input("Enter the IP for pinging:\n[green]kumCTF[/green]>")
+        console.print("[yellow]Press Ctrl+C to stop pinging at any time.[/yellow]")
+        console.print("[bold green]Pinging in progress...[/bold green]")
 
         if not target:
             value_error_count += 1
@@ -79,7 +94,6 @@ def run_ping():
 
             stdout, stderr = process.communicate()
 
-            # Hata mesajı varsa, gösterelim
             if stderr:
                 console.print(f"[bold red]Error:[/bold red] {stderr.strip()}")
                 value_error_count += 1
@@ -97,16 +111,29 @@ def run_ping():
             if back == 'b':
                 clear_terminal()
                 return
+
             value_error_count += 1
+
+        except KeyboardInterrupt:
+            console.print("[bold yellow]Scan interrupted by user.[/bold yellow]")
+            back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+            if back == 'b':
+                information_gathering()
+                break
+
+            else:
+                console.print("[bold red]Invalid attempt exiting...[/bold red]")
+                exit()
 
         except Exception as e:
             back = console.input(f"""[bold red]Unexpected error:[/bold red] {e}\n
                 Press (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>
                 """)
+
             if back == 'b':
-                clear_terminal()
                 information_gathering()
                 break
+
             value_error_count += 1
 
     if value_error_count >= 3:
@@ -115,13 +142,14 @@ def run_ping():
 
     return
 
-
 def run_dig():
     value_error_count = 0
 
     while value_error_count < 3:
         clear_terminal()
         target = console.input("Enter the target domain:\n[green]kumCTF[/green]>")
+        console.print("[yellow]Press Ctrl+C to stop 'dig' at any time.[/yellow]\n")
+        console.print("\n[bold green]dig in progress...[/bold green]\n")
 
         if not target:
             value_error_count += 1
@@ -138,21 +166,33 @@ def run_dig():
         except FileNotFoundError:
             console.print("\n[bold red]Error:[/bold red] Couldn't find 'dig' in your system, please make sure it is installed.")
             break
+
         except subprocess.CalledProcessError as e:
             back = console.input(f"""[bold red]Error while running dig:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+
             if back == 'b':
-                clear_terminal()
-                information_gathering()
-                break
-            value_error_count += 1
-        except Exception as e:
-            back = console.input(f"""[bold red]Unexpected error:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
-            if back == 'b':
-                clear_terminal()
                 information_gathering()
                 break
             value_error_count += 1
 
+        except Exception as e:
+            back = console.input(f"""[bold red]Unexpected error:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
+
+            if back == 'b':
+                information_gathering()
+                break
+            value_error_count += 1
+
+        except KeyboardInterrupt:
+            console.print("[bold yellow]Scan interrupted by user.[/bold yellow]")
+            back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+
+            if back == 'b':
+                information_gathering()
+                break
+            else:
+                console.print("[bold red]Invalid attempt exiting...[/bold red]")
+                exit()
     if value_error_count >= 3:
         console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
         exit()
@@ -164,6 +204,8 @@ def run_nslookup():
     while value_error_count < 3:
         clear_terminal()
         target = console.input("Target IP for reverse DNS lookup:\n[green]kumCTF>[/green] ")
+        console.print("[yellow]Press Ctrl+C to stop lookup at any time.[/yellow]\n")
+        console.print("\n[bold green]nslookup in progress...[/bold green]\n")
 
         if not target:
             value_error_count += 1
@@ -172,30 +214,36 @@ def run_nslookup():
             continue
 
         try:
-            result = subprocess.run(["nslookup", target], text=True, capture_output=True, check=True)
+            result = subprocess.run(["nslookup", target], text=True, capture_output=True)
             console.print(f"[bold green]NSLookup Result for {target}:[/bold green]\n")
             console.print(result.stdout)
             break
         except FileNotFoundError:
             back = console.input("""[bold red]Error:[/bold red] Couldn't find 'nslookup' in your system, please make sure it is installed.\nPress (b) to go back\n[green]kumCTF[/green]>""")
             if back == 'b':
-                clear_terminal()
                 information_gathering()
                 break
         except subprocess.CalledProcessError as e:
             back = console.input(f"""[bold red]Error while running nslookup:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
             if back == 'b':
-                clear_terminal()
                 information_gathering()
                 break
             value_error_count += 1
         except Exception as e:
             back = console.input(f"""[bold red]Unexpected error:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
             if back == 'b':
-                clear_terminal()
                 information_gathering()
                 break
             value_error_count += 1
+        except KeyboardInterrupt:
+            console.print("[bold yellow]Scan interrupted by user.[/bold yellow]")
+            back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+            if back == 'b':
+                information_gathering()
+                break
+            else:
+                console.print("[bold red]Invalid attempt exiting...[/bold red]")
+                exit()
 
     if value_error_count >= 3:
         console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
@@ -205,6 +253,7 @@ def run_nslookup():
 
 
 def information_gathering():
+    clear_terminal()
 
     console.print(
         Panel(
@@ -231,77 +280,37 @@ def information_gathering():
     value_error_count = 0
     choice_error_count = 0
     while True:
+        choice = console.input("\nPlease choose a tool (1-4) or (b) back:\n[green]kumCTF[/green]>")
+
+        if choice.lower() == 'b':
+            print("\nGoing back...")
+            clear_terminal()
+            main_menu()
+            break
+
         try:
-            tool = int(console.input("\nPlease choose a tool (1-4) or (5) back:\n[green]kumCTF[/green]>"))
+            tool = int(choice)
         except ValueError:
-            console.print("[red]Value error, please enter a number between (1-4)![/red]\n[green]kumCTF[/green]>")
+            console.print(
+                "[red]Value error, please enter a number between (1-4) or 'b' to go back![/red]\n[green]kumCTF[/green]>")
             value_error_count += 1
             if value_error_count >= 3:
-                console.print("[red]Too many invalid values.Exiting...[/red]")
+                console.print("[red]Too many invalid values. Exiting...[/red]")
                 exit()
             continue
 
         match tool:
             case 1:
-                console.print("\nRunning [cyan]Ping[/cyan]...")
                 run_ping()
-                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
-                if back == 'b':
-                    clear_terminal()
-                    information_gathering()
-                else:
-                    back_again = console.input("Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
-                    if back_again != 'b':
-                        exit()
-                    else:
-                        clear_terminal()
-                        information_gathering()
+                break
             case 2:
-                console.print("\nRunning [cyan]Nslookup[/cyan]...")
                 run_nslookup()
-                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
-                if back == 'b':
-                    clear_terminal()
-                    information_gathering()
-                else:
-                    back_again = console.input("Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
-                    if back_again != 'b':
-                        exit()
-                    else:
-                        clear_terminal()
-                        information_gathering()
+                break
             case 3:
-                console.print("\nRunning [cyan]Dig[/cyan]...")
                 run_dig()
-                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
-                if back == 'b':
-                    clear_terminal()
-                    information_gathering()
-                else:
-                    back_again = console.input("Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
-                    if back_again != 'b':
-                        exit()
-                    else:
-                        clear_terminal()
-                        information_gathering()
             case 4:
-                console.print("\nRunning [cyan]Whois[/cyan]...")
                 run_whois()
-                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
-                if back == 'b':
-                    clear_terminal()
-                    information_gathering()
-                else:
-                    back_again = console.input("Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
-                    if back_again != 'b':
-                        exit()
-                    else:
-                        clear_terminal()
-                        information_gathering()
-            case 5:
-                print("\nGoing back...")
-                clear_terminal()
-                main_menu()
+                break
             case _:
                 console.print("[red]Invalid choice, try again![/red]")
                 choice_error_count += 1
@@ -332,7 +341,9 @@ def scan_ports_with_rustscan():
         ]
 
         try:
-            result = subprocess.run(command, capture_output=True, text=True)
+            with console.status("[bold green]Scanning in progress...[/bold green]", spinner="dots"):
+
+                result = subprocess.run(command, capture_output=True, text=True)
 
             import re
             output = result.stdout
@@ -345,7 +356,6 @@ def scan_ports_with_rustscan():
             console.print("[bold cyan]🔍 RustScan Results - Target: [green]{}[/green][/bold cyan]".format(target))
             console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
 
-            # Önemli bilgileri çıkar ve göster
             open_ports = []
             for line in lines:
                 if "Open" in line and not "Script" in line:
@@ -365,16 +375,23 @@ def scan_ports_with_rustscan():
             back = console.input(
                 f"""[bold red]Error:[/bold red] An error occurred while running rustscan: {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
             if back == 'b':
-                clear_terminal()
                 scanning()
                 break
             value_error_count += 1
 
+        except KeyboardInterrupt:
+            console.print("[bold yellow]Scan interrupted by user.[/bold yellow]")
+            back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+            if back == 'b':
+                scanning()
+                break
+            else:
+                console.print("[bold red]Invalid attempt exiting...[/bold red]")
+                exit()
         except Exception as e:
             back = console.input(
                 f"""[bold red]Unexpected error:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
             if back == 'b':
-                clear_terminal()
                 scanning()
                 break
             value_error_count += 1
@@ -410,7 +427,6 @@ def detailed_nmap_scan():
     console.print("[yellow]This may take some time depending on the target and ports selected.[/yellow]")
 
     try:
-        #ilerleme cubuğu mu neydi o
         with console.status("[bold green]Scanning in progress...[/bold green]", spinner="dots"):
 
             result = subprocess.run(command, text=True, capture_output=True)
@@ -482,9 +498,15 @@ def detailed_nmap_scan():
 
     except KeyboardInterrupt:
         console.print("[bold yellow]Scan interrupted by user.[/bold yellow]")
-        return
+        back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+        if back == 'b':
+            scanning()
+        else:
+            console.print("[bold red]Invalid attempt exiting...[/bold red]")
+            exit()
     except Exception as e:
         console.print(f"[bold red]An error occurred: {e}[/bold red]")
+        scanning()
 
 def nmap_service_deteciton():
     clear_terminal()
@@ -492,6 +514,7 @@ def nmap_service_deteciton():
     console.print("[bold cyan]🔍 Service & Version Scanner[/bold cyan]")
     console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
     console.print("Detects the service & version on the target IP.")
+    console.print("[yellow]Press Ctrl+C to stop the scan at any time.[/yellow]\n")
 
     target = console.input("[yellow]Please enter the target IP:[/yellow]\n[green]kumCTF[/green]>")
 
@@ -569,9 +592,15 @@ def nmap_service_deteciton():
 
     except KeyboardInterrupt:
         console.print("[bold yellow]Scan interrupted by user.[/bold yellow]")
+        back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+        if back == 'b':
+            scanning()
+        else:
+            console.print("[bold red]Invalid attempt exiting...[/bold red]")
+            exit()
     except Exception as e:
         console.print(f"[bold red]An error occurred: {e}[/bold red]")
-
+        scanning()
 
 def run_netdiscover():
     clear_terminal()
@@ -627,9 +656,13 @@ def run_netdiscover():
 
     except KeyboardInterrupt:
         console.print("\n[yellow]⚠️ Network discovery was interrupted by the user.[/yellow]")
-        clear_terminal()
-        if process:
+        back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+        if back == 'b':
+            scanning()
             process.terminate()
+        else:
+            console.print("[bold red]Invalid attempt exiting...[/bold red]")
+            exit()
     except Exception as e:
         console.print(f"[bold red]An error occurred: {e}[/bold red]")
         if process:
@@ -638,6 +671,7 @@ def run_netdiscover():
     scanning()
 
 def scanning():
+    clear_terminal()
     console.print(
         Panel(
             """Scanning is the process of identifying live hosts, open ports, and running services on a target system or network.
@@ -657,20 +691,28 @@ It helps to gather detailed technical information that can be used for further a
     table.add_row("1-Netdiscover", "Quickly discover live hosts on a local network using ARP requests.")
     table.add_row("2-Rustscan", "Extremely fast port scanner to identify open ports efficiently.")
     table.add_row("3-Nmap Detailed Scan", "Perform SYN scan, service and version detection, script scanning, and OS detection for full analysis.")
-    table.add_row("4-Nmap Server & Version Deteciton", "Identify running services and their versions on open ports.")
+    table.add_row("4-Nmap Service & Version Detection", "Identify running services and their versions on open ports.")
 
     console.print(table)
 
     value_error_count = 0
     choice_error_count = 0
     while True:
+        choice = console.input("\nPlease choose a tool (1-4) or (b) back:\n[green]kumCTF[/green]>")
+
+        if choice == 'b':
+            print("\nGoing back...")
+            main_menu()
+            break
+
         try:
-            tool = int(console.input("\nPlease choose a tool (1-4) or (5) back:\n[green]kumCTF[/green]>"))
+            tool = int(choice)
         except ValueError:
-            console.print("[red]Value error, please enter a number between (1-4)![/red]\n[green]kumCTF[/green]>")
+            console.print(
+                "[red]Value error, please enter a number between (1-4) or 'b' to go back![/red]\n[green]kumCTF[/green]>")
             value_error_count += 1
             if value_error_count >= 3:
-                console.print("[red]Too many invalid values.Exiting...[/red]")
+                console.print("[red]Too many invalid values. Exiting...[/red]")
                 exit()
             continue
 
@@ -680,65 +722,61 @@ It helps to gather detailed technical information that can be used for further a
                 run_netdiscover()
                 back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
                 if back == 'b':
-                    clear_terminal()
                     scanning()
+                    break
                 else:
                     back_again = console.input(
                         "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
                     if back_again != 'b':
                         exit()
                     else:
-                        clear_terminal()
                         scanning()
+                        break
             case 2:
                 console.print("\nRunning [blue]Rustscan[/blue]...")
                 scan_ports_with_rustscan()
                 back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
                 if back == 'b':
-                    clear_terminal()
                     scanning()
+                    break
                 else:
                     back_again = console.input(
                         "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
                     if back_again != 'b':
                         exit()
                     else:
-                        clear_terminal()
                         scanning()
+                        break
             case 3:
                 console.print("\nRunning [blue]Detailed Nmap Scan[/blue]...")
                 detailed_nmap_scan()
                 back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
                 if back == 'b':
-                    clear_terminal()
                     scanning()
+                    break
                 else:
                     back_again = console.input(
                         "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
                     if back_again != 'b':
                         exit()
                     else:
-                        clear_terminal()
                         scanning()
+                        break
             case 4:
                 console.print("\nRunning [blue]Nmap version & service[/blue]...")
                 nmap_service_deteciton()
                 back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
                 if back == 'b':
-                    clear_terminal()
                     scanning()
+                    break
                 else:
                     back_again = console.input(
                         "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
                     if back_again != 'b':
                         exit()
                     else:
-                        clear_terminal()
                         scanning()
-            case 5:
-                print("\nGoing back...")
-                clear_terminal()
-                main_menu()
+                        break
             case _:
                 console.print("[red]Invalid choice, try again![/red]")
                 choice_error_count += 1
@@ -749,6 +787,7 @@ It helps to gather detailed technical information that can be used for further a
 
 
 def privilege_escalation():
+    clear_terminal()
     console.print(
         Panel(
             "[green]kumCTF[/green] recommends manual privilege escalation using custom shell or reverse shell payloads\n"
@@ -834,23 +873,22 @@ def privilege_escalation():
         if back_again != 'b':
             exit()
         else:
-            clear_terminal()
             main_menu()
     else:
-        clear_terminal()
         main_menu()
 
 def john_crack_md5():
+    clear_terminal()
     value_error_count = 0
-    timeout = 60  # Timeout süresi (saniye cinsinden)
+    timeout = 60
 
     while value_error_count < 3:
-        clear_terminal()
-        hash_file = console.input("Please enter the path to the hash file:\n[green]kumCTF[/green]>")
+        hash_file = console.input("Please enter the path to the hash file:\n([cyan]example:/usr/share/wordlists/rockyou.txt[/cyan])\n[green]kumCTF[/green]>")
 
         if not hash_file or not os.path.isfile(hash_file):
             value_error_count += 1
-            console.print(f"[bold red]Invalid file path![/bold red] Please provide a valid file path. Attempts remaining: {3 - value_error_count}")
+            console.print(
+                f"[bold red]Invalid file path![/bold red] Please provide a valid file path. Attempts remaining: {3 - value_error_count}")
             continue
 
         console.print(f"Starting John the Ripper against MD5 hash file [green]{hash_file}[/green]...\n")
@@ -863,15 +901,14 @@ def john_crack_md5():
 
         try:
             console.print("[bold yellow]Running John the Ripper...[/bold yellow]")
+            console.print("[yellow]Press Ctrl+C to stop john any time[/yellow]\n")
             result = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
 
-            # Output header
             console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
             console.print(f"[bold cyan]🔑 John the Ripper Results - Hash File: [green]{hash_file}[/green][/bold cyan]")
             console.print("[bold blue]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[/bold blue]")
             console.print(result.stdout)
 
-            # Check for cracked passwords
             show_command = ["john", "--show", "--format=raw-md5", hash_file]
             show_result = subprocess.run(show_command, capture_output=True, text=True)
 
@@ -885,10 +922,17 @@ def john_crack_md5():
             if result.stderr:
                 console.print(f"[bold red]Error output:[/bold red]\n{result.stderr}")
 
-            break  # If everything goes well, exit loop
+            back = console.input("\nPress [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+            if back == 'b':
+                password_cracker()
+                break
+            else:
+                console.print("[bold red]Invalid attempt exiting...[/bold red]")
+                exit()
 
         except subprocess.TimeoutExpired:
-            console.print("[bold red]Error:[/bold red] The process timed out. Try again with a smaller hash file or increase the timeout.")
+            console.print(
+                "[bold red]Error:[/bold red] The process timed out. Try again with a smaller hash file or increase the timeout.")
             value_error_count += 1
 
         except subprocess.CalledProcessError as e:
@@ -899,18 +943,25 @@ def john_crack_md5():
             console.print(f"[bold red]Unexpected error:[/bold red] {e}")
             value_error_count += 1
 
+        except KeyboardInterrupt:
+            console.print("[yellow]\nJohn stopped by the user[/yellow]")
+            back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+            if back == 'b':
+                password_cracker()
+                break
+            else:
+                console.print("[bold red]Invalid attempt exiting...[/bold red]")
+                exit()
+
     if value_error_count >= 3:
         console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
         exit()
 
-
-
 def hashcat_crack_md5():
+    clear_terminal()
     value_error_count = 0
-
     while value_error_count < 3:
-        clear_terminal()
-        hash_file = console.input("Please enter the path to the hash file:\n[green]kumCTF[/green]>")
+        hash_file = console.input("Please enter the path to the hash file:\n([cyan]example:/usr/share/wordlists/rockyou.txt[/cyan])\n[green]kumCTF[/green]>")
 
         if not hash_file or not os.path.isfile(hash_file):
             value_error_count += 1
@@ -918,7 +969,8 @@ def hashcat_crack_md5():
                 f"[bold red]Invalid file path![/bold red] Please provide a valid file path. Attempts remaining: {3 - value_error_count}")
             continue
 
-        wordlist = console.input("Please enter the path to the wordlist file:\n[green]kumCTF[/green]>")
+        wordlist = console.input("Please enter the path to the wordlist file:\n([cyan]example/home/kali/CTF/challenges/hashes.txt[/cyan])\n[green]kumCTF[/green]>")
+        console.print("\n[yellow]Press Ctrl+C to stop hashcat any time[/yellow]\n")
 
         if not wordlist or not os.path.isfile(wordlist):
             value_error_count += 1
@@ -964,6 +1016,12 @@ def hashcat_crack_md5():
 
             if result.stderr:
                 console.print(f"[bold red]Error output:[/bold red]\n{result.stderr}")
+                back = console.input("Press (b) please, or the system will [bold red]kick[/bold red] you!")
+                if back == 'b':
+                    password_cracker()
+                    break
+                else:
+                    exit()
 
             break
 
@@ -971,7 +1029,6 @@ def hashcat_crack_md5():
             back = console.input(
                 f"""[bold red]Error:[/bold red] An error occurred while running Hashcat: {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
             if back == 'b':
-                clear_terminal()
                 password_cracker()
                 break
             value_error_count += 1
@@ -980,16 +1037,24 @@ def hashcat_crack_md5():
             back = console.input(
                 f"""[bold red]Unexpected error:[/bold red] {e}\nPress (b) to go back or (any other key) to retry\n[green]kumCTF[/green]>""")
             if back == 'b':
-                clear_terminal()
                 password_cracker()
                 break
             value_error_count += 1
-
+        except KeyboardInterrupt:
+            console.print("[yellow]\nhashcat stopped by the user[/yellow]")
+            back = console.input("Press [yellow](b)[/yellow] to go back\n[green]kumCTF[/green]>")
+            if back == 'b':
+                password_cracker()
+                break
+            else:
+                console.print("[bold red]Invalid attempt exiting...[/bold red]")
+                exit()
     if value_error_count >= 3:
         console.print("[bold red]Too many invalid attempts. Exiting...[/bold red]")
         exit()
 
 def password_cracker():
+    clear_terminal()
     console.print(
         Panel(
             "This module allows you to crack MD5 hashes using a wordlist.\n"
@@ -1029,51 +1094,31 @@ def password_cracker():
     value_error_count = 0
     choice_error_count = 0
     while True:
+        choice = console.input("\nPlease choose a tool (1-2) or (b) back:\n[green]kumCTF[/green]>")
+
+        if choice == 'b':
+            print("\nGoing back...")
+            main_menu()
+            break
+
         try:
-            tool = int(console.input("\nPlease choose a tool (1-2) or (b) back:\n[green]kumCTF[/green]>"))
+            tool = int(choice)
         except ValueError:
-            console.print("[red]Value error, please enter a number between (1-2)![/red]\n[green]kumCTF[/green]>")
+            console.print(
+                "[red]Value error, please enter a number between (1-2) or 'b' to go back![/red]\n[green]kumCTF[/green]>")
             value_error_count += 1
             if value_error_count >= 3:
-                console.print("[red]Too many invalid values.Exiting...[/red]")
+                console.print("[red]Too many invalid values. Exiting...[/red]")
                 exit()
             continue
 
         match tool:
             case 1:
-                console.print("\nRunning [cyan]John The Ripper[/cyan]...")
                 john_crack_md5()
-                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
-                if back == 'b':
-                    clear_terminal()
-                    password_cracker()
-                else:
-                    back_again = console.input(
-                        "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
-                    if back_again != 'b':
-                        exit()
-                    else:
-                        clear_terminal()
-                        password_cracker()
+                break
             case 2:
-                console.print("\nRunning [cyan]hashcat[/cyan]...")
                 hashcat_crack_md5()
-                back = console.input("Press (b) to go back\n[green]kumCTF[/green]>")
-                if back == 'b':
-                    clear_terminal()
-                    password_cracker()
-                else:
-                    back_again = console.input(
-                        "Press [yellow](b)[/yellow] please,or the system will [bold red]kick[/bold red] you!!!\n[green]kumCTF[/green]>")
-                    if back_again != 'b':
-                        exit()
-                    else:
-                        clear_terminal()
-                        password_cracker()
-            case 3:
-                print("\nGoing back...")
-                clear_terminal()
-                main_menu()
+                break
             case _:
                 console.print("[red]Invalid choice, try again![/red]")
                 choice_error_count += 1
@@ -1148,7 +1193,7 @@ def main_menu():
     choice_error_count = 0
     while True:
         try:
-            module = int(console.input("\nPlease choose a module (1-4) or (b) back:\n[green]kumCTF[/green]>"))
+            module = int(console.input("\nPlease choose a module (1-4):\n[green]kumCTF[/green]>"))
         except ValueError:
             console.print("[red]Value error, please enter a number between (1-4)![/red]\n[green]kumCTF[/green]>")
             value_error_count += 1
@@ -1159,17 +1204,17 @@ def main_menu():
 
         match module:
             case 1:
-                clear_terminal()
                 information_gathering()
+                break
             case 2:
-                clear_terminal()
                 scanning()
+                break
             case 3:
-                clear_terminal()
                 privilege_escalation()
+                break
             case 4:
-                clear_terminal()
                 password_cracker()
+                break
             case _:
                 console.print("[red]Invalid choice, try again![/red]")
                 choice_error_count += 1

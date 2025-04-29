@@ -19,7 +19,7 @@
 
 Here is the main menu of kumCTF, showcasing the available modules:
 
-![kumCTF Main Menu](https://github.com/tunakum/kumCTF/blob/b8947bb89110dd0ced9ae658414925af81b580a5/kumCTFmainmenu.png)
+![kumCTF Main Menu](https://github.com/tunakum/kumCTF/blob/a957cab8ca7e42e4b45dd798978a6fd1de15e919/mainmenu.png)
 
 ## 🛠 Used Technologies
 

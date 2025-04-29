@@ -59,4 +59,4 @@ By using **kumCTF**, you agree that you are solely responsible for your actions.
 git clone https://github.com/tunakum/kumCTF.git
 cd kumCTF
 pip install -r requirements.txt
-python3 main.py
+python3 kumCTF.py

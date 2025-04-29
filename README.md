@@ -19,7 +19,7 @@
 
 Here is the main menu of kumCTF, showcasing the available modules:
 
-![kumCTF Main Menu](./kumctfmainmenu.png)
+![kumCTF Main Menu](kumctfmainmenu.png)
 
 ## 🛠 Used Technologies
 

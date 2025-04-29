@@ -3,7 +3,7 @@
 **kumCTF** is a beginner-friendly Capture The Flag (CTF) tool designed to help new learners practice basic pentesting and cybersecurity techniques.
 
 
-## 🎯 ## Features
+## 🎯 Features
 
 ### Main Modules:
 - **Information Gathering**
@@ -19,7 +19,7 @@
 
 Here is the main menu of kumCTF, showcasing the available modules:
 
-![kumCTF Main Menu](https://github.com/tunakum/kumCTF/blob/a957cab8ca7e42e4b45dd798978a6fd1de15e919/mainmenu.png)
+![kumCTF Main Menu](https://github.com/tunakum/kumCTF/blob/a0895c87c272e3e1504d95e56734cc964b927be1/kumcftmainmenu.png)
 
 ## 🛠 Used Technologies
 

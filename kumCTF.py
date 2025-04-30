@@ -830,7 +830,7 @@ def privilege_escalation():
         Panel(
             "This module offers a lightweight documentation-style reference of commonly used reverse shells and Linux-based privilege escalation commands. Instead of running heavy automated scripts like LinEnum or LinPEAS—which require internet access to download—we provide persistent and minimal tools for quick reference, especially when internet access is restricted or when using a stable toolset is preferred."
             "\n[bold yellow]Note[/bold yellow]:"
-            "\nWe do not include linenum or linpeas.sh here because in scenarios where you can download them, you likely don’t need kumCTF. This tool is for when you want a consistent, offline set of escalation helpers.\n"
+            "\nWe do not include linenum or linpeas.sh here because in scenarios where you can download them, you likely don’t need [green]kumCTF[/green]. This tool is for when you want a consistent, offline set of escalation helpers.\n"
             "The following payloads are collected from:\n"
             "- [red3]GTFOBins[/red3] (https://gtfobins.github.io)\n"
             "- [cyan1]PentestMonkey Reverse Shell Cheatsheet[/cyan1] (http://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet)\n"
@@ -1246,7 +1246,7 @@ def main_menu():
         "A module focused on gaining higher-level access to a system after initial exploitation. It uses reverse shells to escalate privileges, allowing an attacker to run commands with elevated permissions."
                   )
     table.add_row("4-[purple]Password Cracker(MD5)[/purple]",
-                  "A tool used to crack password hashes, basic MD5 hash cracking using dictionary attacks with John and Hashcat."
+                  "A module used to crack password hashes, basic MD5 hash cracking using dictionary attacks with John and Hashcat."
                   )
     console.print(table)
     value_error_count = 0
